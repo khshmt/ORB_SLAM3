@@ -521,15 +521,43 @@ void System::Shutdown()
 
     cout << "Shutdown" << endl;
 
-    mpLocalMapper->RequestFinish();
-    mpLoopCloser->RequestFinish();
-    /*if(mpViewer)
+    while (mpLoopCloser->isRunningGBA())
     {
-        mpViewer->RequestFinish();
-        while(!mpViewer->isFinished())
-            usleep(5000);
-    }*/
+        if(mpLoopCloser->isRunningGBA())
+        {
+            cout << "mpLoopCloser is running GBA, wait~~~~" << endl;\
+            usleep(1000000);
+        }
+    }
 
+    if(mpViewer)
+    {
+        int wait_limit = 0;
+        while(!mpViewer->isFinished())
+        {
+            wait_limit++;
+            if (wait_limit > 10)
+                break;
+            mpViewer->RequestFinish();
+            usleep(1000000);
+            cout << "mpViewer is not finished" << endl;
+        }
+    }
+
+    int wait_limit = 0;
+    while( !mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() )
+    {
+        mpLocalMapper->RequestFinish();
+        mpLoopCloser->RequestFinish();
+        if(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished())
+        {
+            wait_limit++;
+            if (wait_limit > 10)
+                break;
+            usleep(1000000);
+            cout << "mpLocalMapper or mpLoopCloser is not finished" << endl;
+        }
+    }
     // Wait until all thread have effectively stopped
     /*while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     {
@@ -544,6 +572,9 @@ void System::Shutdown()
         }*/
         /*usleep(5000);
     }*/
+
+    std::cout << "just wait for 10 seconds" << std::endl;
+    usleep(10000000);
 
     if(!mStrSaveAtlasToFile.empty())
     {

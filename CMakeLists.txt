@@ -28,12 +28,23 @@ else()
    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+set(ENABLE_BACKWARD true)
+if(ENABLE_BACKWARD)
+    add_definitions(-D USE_BACKWARD)
+    set(LIBDW "dw")
+else()
+    set(LIBDW "")
+endif()
+
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(OpenCV 4.4)
+if(NOT OpenCV_FOUND)
+   find_package(OpenCV 3.2 REQUIRED)
    if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 4.4 not found.")
+      message(FATAL_ERROR "OpenCV > 3.4 not found.")
    endif()
+endif()
 
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
@@ -111,7 +122,10 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+        include/backward.hpp
+        src/backward.cpp
+        )
 
 add_subdirectory(Thirdparty/g2o)
 
@@ -123,6 +137,7 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
+${LIBDW}
 )
 
 # If RealSense SDK is found the library is added and its examples compiled

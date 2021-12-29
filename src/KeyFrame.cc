@@ -212,9 +212,11 @@ void KeyFrame::UpdateBestCovisibles()
     sort(vPairs.begin(),vPairs.end());
     list<KeyFrame*> lKFs;
     list<int> lWs;
+//    int count = 0;
     for(size_t i=0, iend=vPairs.size(); i<iend;i++)
     {
-        if(!vPairs[i].second->isBad())
+//        std::cout << " ~~~~ " << vPairs.size() << " | " << count++ << " | " << !vPairs[i].second << std::endl;
+        if( (vPairs[i].second) && (!vPairs[i].second->isBad()))
         {
             lKFs.push_front(vPairs[i].second);
             lWs.push_front(vPairs[i].first);

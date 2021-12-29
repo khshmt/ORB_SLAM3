@@ -31,6 +31,15 @@
 #include "ImuTypes.h"
 #include "Optimizer.h"
 
+#ifdef USE_BACKWARD
+#define BACKWARD_HAS_DW 1
+#include "backward.hpp"
+namespace backward
+{
+    backward::SignalHandling sh;
+}
+#endif
+
 using namespace std;
 
 void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
@@ -38,6 +47,21 @@ void LoadImages(const string &strPathLeft, const string &strPathRight, const str
 
 void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
 
+bool is_stop_dz = false;
+void command()
+{
+    while(1)
+    {
+        char c = getchar();
+        if (c == 'q')
+        {
+            is_stop_dz = true;
+        }
+
+        std::chrono::milliseconds dura(5);
+        std::this_thread::sleep_for(dura);
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -56,6 +80,9 @@ int main(int argc, char **argv)
         file_name = string(argv[argc-1]);
         cout << "file name: " << file_name << endl;
     }
+
+    std::thread keyboard_command_process;
+    keyboard_command_process = std::thread(command);
 
     // Load all sequences:
     int seq;
@@ -129,7 +156,7 @@ int main(int argc, char **argv)
     cout.precision(17);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, false);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_STEREO, true);
 
     cv::Mat imLeft, imRight;
     for (seq = 0; seq<num_seq; seq++)
@@ -175,20 +202,20 @@ int main(int argc, char **argv)
                     first_imu[seq]++;
                 }
 
-    #ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-    #else
+#else
             std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
-    #endif
+#endif
 
             // Pass the images to the SLAM system
             SLAM.TrackStereo(imLeft,imRight,tframe,vImuMeas);
 
-    #ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-    #else
+#else
             std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
-    #endif
+#endif
 
 #ifdef REGISTER_TIMES
             t_track = t_rect + t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
@@ -208,6 +235,9 @@ int main(int argc, char **argv)
 
             if(ttrack<T)
                 usleep((T-ttrack)*1e6); // 1e6
+
+            if (is_stop_dz)
+                break;
         }
 
         if(seq < num_seq - 1)

@@ -8,9 +8,10 @@
 
 # If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
 #System.LoadAtlasFromFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+#System.LoadAtlasFromFile: "MH01-MH05"
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
-#System.SaveAtlasToFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+System.SaveAtlasToFile: "MH05"
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
