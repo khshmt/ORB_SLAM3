@@ -56,6 +56,22 @@ nav_msgs::Path orb_path;
 Eigen::Vector3d ba, bg;
 float shift = 0;
 
+bool is_stop_dz = false;
+void command()
+{
+    while(1)
+    {
+        char c = getchar();
+        if (c == 'q')
+        {
+            is_stop_dz = true;
+        }
+
+        std::chrono::milliseconds dura(5);
+        std::this_thread::sleep_for(dura);
+    }
+}
+
 class ImuGrabber
 {
 public:
@@ -164,6 +180,9 @@ int main(int argc, char **argv) {
         if (sbEqual == "true")
             bEqual = true;
     }
+
+    std::thread keyboard_command_process;
+    keyboard_command_process = std::thread(command);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, false);
@@ -398,7 +417,17 @@ void ImageGrabber::SyncWithImu() {
             std::chrono::milliseconds tSleep(1);
             std::this_thread::sleep_for(tSleep);
         }
+
+        if (is_stop_dz)
+            break;
     }
+
+    mpSLAM->Shutdown();
+    const string kf_file =  "kf_traj.txt";
+    const string f_file =  "f_traj.txt";
+    mpSLAM->SaveTrajectoryTUM(f_file);
+    mpSLAM->SaveKeyFrameTrajectoryTUM(kf_file);
+    exit(0);
 }
 
 void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg) {

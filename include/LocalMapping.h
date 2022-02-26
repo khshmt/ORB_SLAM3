@@ -28,7 +28,7 @@
 #include "Settings.h"
 
 #include <mutex>
-
+#define FAST_INIT_NEEDED
 
 namespace ORB_SLAM3
 {

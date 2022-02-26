@@ -8,10 +8,11 @@
 
 # If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
 #System.LoadAtlasFromFile: "MH01-MH05"
-#System.LoadAtlasFromFile: "MH01-MH05"
+System.LoadAtlasFromFile: "dz_new"
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
 #System.SaveAtlasToFile: "MH01-MH05"
+#System.SaveAtlasToFile: "dz_new"
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
