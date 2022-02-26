@@ -32,6 +32,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include "opencv2/core/eigen.hpp"
 
 namespace ORB_SLAM3
 {
@@ -241,7 +242,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
-Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
@@ -315,6 +316,26 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     // std::cout << "start GrabImageStereo" << std::endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
 
+    Eigen::Matrix4f test_eig = Tcw.matrix();
+    cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
+    if (!test_eig.isIdentity() && mpAtlas->GetCurrentMap()->GetIniertialBA1())
+    {
+        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
+        IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
+        cv::eigen2cv(mpTracker->mCurrentFrame.GetImuPose().matrix(), tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
+        tmp_Data.row(4).colRange(0, 3) = tmp_cv_mat.t();
+
+        tmp_Data.at<float>(5, 0) = tmp_bias.bax;
+        tmp_Data.at<float>(5, 1) = tmp_bias.bay;
+        tmp_Data.at<float>(5, 2) = tmp_bias.baz;
+        tmp_Data.at<float>(6, 0) = tmp_bias.bwx;
+        tmp_Data.at<float>(6, 1) = tmp_bias.bwy;
+        tmp_Data.at<float>(6, 2) = tmp_bias.bwz;
+    }
+    else
+        tmp_Data.release();
+
     // std::cout << "out grabber" << std::endl;
 
     unique_lock<mutex> lock2(mMutexState);
@@ -322,7 +343,7 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 
-    return Tcw;
+    return tmp_Data.clone();
 }
 
 Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
