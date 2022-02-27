@@ -4,10 +4,10 @@
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 
-System.LoadAtlasFromFile: "dz_new2"
+System.LoadAtlasFromFile: "dz_new2_2"
 
 
-#System.SaveAtlasToFile: "dz_new2"
+#System.SaveAtlasToFile: "dz_new2_2"
 
 
 File.version: "1.0"
@@ -51,7 +51,7 @@ depth_topic: "/camera/depth_registered/image_raw"
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1200
+ORBextractor.nFeatures: 1500
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
 ORBextractor.scaleFactor: 1.2
@@ -64,7 +64,7 @@ ORBextractor.nLevels: 8
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
 ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 7
+ORBextractor.minThFAST: 5
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

@@ -30,9 +30,14 @@ Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
 ThDepth: 40.0
+Stereo.b: 0.07732
 
 # Deptmap values factor
 DepthMapFactor: 1.0
+
+#Topic names
+rgb_topic: "/camera/rgb/image_raw"
+depth_topic: "/camera/depth_registered/image_raw"
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

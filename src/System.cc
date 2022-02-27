@@ -322,11 +322,14 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
     if (!test_eig.isIdentity() && mpAtlas->GetCurrentMap()->GetIniertialBA1())
     {
-        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
         IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
-        cv::eigen2cv(mpTracker->mCurrentFrame.GetImuPose().matrix(), tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
+        cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
+        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
+        tmp_cv_mat0.copyTo(tmp_Data.rowRange(0, 4).colRange(0, 4));
         cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
-        tmp_Data.row(4).colRange(0, 3) = tmp_cv_mat.t();
+        tmp_cv_mat = tmp_cv_mat.t();
+        tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
 
         tmp_Data.at<float>(5, 0) = tmp_bias.bax;
         tmp_Data.at<float>(5, 1) = tmp_bias.bay;
@@ -416,10 +419,13 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
     if (!test_eig.isIdentity())
     {
+        cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
         cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
-        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_Data.rowRange(0, 4).colRange(0, 4));
+        cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
+        tmp_cv_mat0.copyTo(tmp_Data.rowRange(0, 4).colRange(0, 4));
         cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
-        tmp_Data.row(4).colRange(0, 3) = tmp_cv_mat.t();
+        tmp_cv_mat = tmp_cv_mat.t();
+        tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
     }
     else
         tmp_Data.release();

@@ -277,7 +277,7 @@ namespace ORB_SLAM3
                                  (mTinit > 55.0f && mTinit < 55.5f) ||
                                  (mTinit > 65.0f && mTinit < 65.5f) ||
                                  (mTinit > 75.0f && mTinit < 75.5f) ||
-                                 (mTinit > 95.0f && mTinit < 95.5f)))
+                                 (mTinit > 95.0f && mTinit < 95.5f) ))
                             {
                                 cout << "scale ref ~" << endl;
                                 if (mbMonocular)
