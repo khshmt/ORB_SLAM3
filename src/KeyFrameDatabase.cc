@@ -646,7 +646,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, vector<KeyFrame*> &v
     }
 
     //TODO: 2022/3/1 减小公共单词数需求(default:0.8) by dz
-    int minCommonWords = maxCommonWords*0.7f;
+    int minCommonWords = maxCommonWords*0.8f;
 
     list<pair<float,KeyFrame*> > lScoreAndMatch;
 

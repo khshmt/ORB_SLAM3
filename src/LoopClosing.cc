@@ -341,7 +341,7 @@ bool LoopClosing::NewDetectCommonRegions()
     }
 
     //TODO: 2022/3/1 加速地图融合，即VI-BA1就可以开始了(default: GetIniertialBA2) by dz
-    if(mpLastMap->IsInertial() && !mpLastMap->GetIniertialBA1())
+    if(mpLastMap->IsInertial() && !mpLastMap->GetIniertialBA2())
     {
         mpKeyFrameDB->add(mpCurrentKF);
         mpCurrentKF->SetErase();
@@ -397,7 +397,7 @@ bool LoopClosing::NewDetectCommonRegions()
 
             //TODO: 2022/3/1 这里为更容易检测到回环设置成2(default:3) by dz
             std::cout << "This time is valid for loopcloure detection~~" << std::endl;
-            mbLoopDetected = mnLoopNumCoincidences >= 2;
+            mbLoopDetected = mnLoopNumCoincidences >= 3;
             mnLoopNumNotFound = 0;
 
             if(!mbLoopDetected)
@@ -411,7 +411,7 @@ bool LoopClosing::NewDetectCommonRegions()
 
             mnLoopNumNotFound++;
             //TODO: 2022/3/1 notfound default is 2 by dz
-            if(mnLoopNumNotFound >= 3)
+            if(mnLoopNumNotFound >= 2)
             {
                 mpLoopLastCurrentKF->SetErase();
                 mpLoopMatchedKF->SetErase();
@@ -455,7 +455,7 @@ bool LoopClosing::NewDetectCommonRegions()
 
             mnMergeNumNotFound++;
             //TODO: 2022/3/1 notfound default is 2 by dz
-            if(mnMergeNumNotFound >= 3)
+            if(mnMergeNumNotFound >= 2)
             {
                 mpMergeLastCurrentKF->SetErase();
                 mpMergeMatchedKF->SetErase();
@@ -2454,7 +2454,7 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
                 }*/
 
                 //TODO: 2022/3/1 为了能在非IMU模式下融合IMU地图 by dz
-//                if(pKF->bImu && pKF->GetMap()->IsInertial())
+//                if(pKF->bImu && pKF->GetMap()->IsInertial()) //modified
                 if(pKF->bImu)
                 {
                     //cout << "-------Update inertial values" << endl;
