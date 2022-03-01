@@ -236,7 +236,7 @@ namespace ORB_SLAM3
                             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA1())
                             {
 #ifdef FAST_INIT_NEEDED
-                                if (mTinit > 7.5f)
+                                if (mTinit > 6.f)
 #else
                                 if (mTinit > 5.0f)
 #endif
@@ -253,7 +253,7 @@ namespace ORB_SLAM3
                             } else if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                             {
 #ifdef FAST_INIT_NEEDED
-                                if (mTinit > 17.5f)
+                                if (mTinit > 15.f)
 #else
                                 if (mTinit > 15.0f)
 #endif
@@ -277,7 +277,8 @@ namespace ORB_SLAM3
                                  (mTinit > 55.0f && mTinit < 55.5f) ||
                                  (mTinit > 65.0f && mTinit < 65.5f) ||
                                  (mTinit > 75.0f && mTinit < 75.5f) ||
-                                 (mTinit > 95.0f && mTinit < 95.5f) ))
+                                 (mTinit > 95.0f && mTinit < 95.5f)
+                                 ))
                             {
                                 cout << "scale ref ~" << endl;
                                 if (mbMonocular)
@@ -1209,7 +1210,7 @@ namespace ORB_SLAM3
         {
             minTime = 2.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 12;
+            nMinKF = 11;
 #else
             nMinKF = 10;
 #endif
@@ -1217,7 +1218,7 @@ namespace ORB_SLAM3
         {
             minTime = 1.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 12;
+            nMinKF = 11;
 #else
             nMinKF = 10;
 #endif
@@ -1513,7 +1514,7 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
         //TODO: 2022/2/26 尺度更新阈值默认为0.002
-        if ((fabs(mScale - 1.f) > 0.001) || !mbMonocular)
+        if ((fabs(mScale - 1.f) > 0.002) || !mbMonocular)
         {
             Sophus::SE3f Tgw(mRwg.cast<float>().transpose(), Eigen::Vector3f::Zero());
             mpAtlas->GetCurrentMap()->ApplyScaledRotation(Tgw, mScale, true);

@@ -96,13 +96,13 @@ ${LIBS}
 
 
 # Node for stereo camera
-#add_executable(Stereo
-#src/ros_stereo.cc
-#)
-#
-#target_link_libraries(Stereo
-#${LIBS}
-#)
+add_executable(Stereo
+src/ros_stereo.cc
+)
+
+target_link_libraries(Stereo
+${LIBS}
+)
 
 # Node for RGB-D camera
 add_executable(RGBD
@@ -114,13 +114,13 @@ ${LIBS}
 )
 
 # Node for monocular-inertial camera
-#add_executable(Mono_Inertial
-#src/ros_mono_inertial.cc
-#)
-#
-#target_link_libraries(Mono_Inertial
-#${LIBS}
-#)
+add_executable(Mono_Inertial
+src/ros_mono_inertial.cc
+)
+
+target_link_libraries(Mono_Inertial
+${LIBS}
+)
 
 # Node for stereo-inertial camera
 add_executable(Stereo_Inertial

@@ -16,7 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include<iostream>
 #include<algorithm>
 #include<fstream>
@@ -27,12 +26,46 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-
-#include<opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
+#include "nav_msgs/Odometry.h"
+#include <Eigen/Dense>
+#include "opencv2/core/eigen.hpp"
+#include <opencv2/core/core.hpp>
 
 #include"../../../include/System.h"
 
+#ifdef USE_BACKWARD
+#define BACKWARD_HAS_DW 1
+#include "backward.hpp"
+namespace backward
+{
+    backward::SignalHandling sh;
+}
+#endif
+
 using namespace std;
+
+ros::Publisher pub_pose;
+ros::Publisher pub_path;
+nav_msgs::Path orb_path;
+
+bool is_stop_dz = false;
+void command()
+{
+    while(1)
+    {
+        char c = getchar();
+        if (c == 'q')
+        {
+            is_stop_dz = true;
+        }
+
+        std::chrono::milliseconds dura(5);
+        std::this_thread::sleep_for(dura);
+    }
+}
 
 class ImageGrabber
 {
@@ -46,6 +79,26 @@ public:
     cv::Mat M1l,M2l,M1r,M2r;
 };
 
+void convertOrbSlamPoseToOdom(const cv::Mat &cv_data, nav_msgs::Odometry &Twb) {
+
+    assert(orb_data.rows == 7);
+    Eigen::MatrixXf eig_data;
+    cv::cv2eigen(cv_data, eig_data);
+    Eigen::MatrixXd eig_data_d = eig_data.cast<double>();
+    Eigen::Quaterniond q_wb(eig_data_d.block<3, 3>(0, 0));
+    q_wb.normalize();
+    Twb.pose.pose.orientation.w = q_wb.w();
+    Twb.pose.pose.orientation.x = q_wb.x();
+    Twb.pose.pose.orientation.y = q_wb.y();
+    Twb.pose.pose.orientation.z = q_wb.z();
+    Twb.pose.pose.position.x = eig_data_d(0, 3);
+    Twb.pose.pose.position.y = eig_data_d(1, 3);
+    Twb.pose.pose.position.z = eig_data_d(2, 3);
+    Twb.twist.twist.linear.x = eig_data_d(4, 0);
+    Twb.twist.twist.linear.y = eig_data_d(4, 1);
+    Twb.twist.twist.linear.z = eig_data_d(4, 2);
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD");
@@ -56,7 +109,26 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: rosrun ORB_SLAM3 Stereo path_to_vocabulary path_to_settings do_rectify" << endl;
         ros::shutdown();
         return 1;
-    }    
+    }
+
+    std::thread keyboard_command_process;
+    keyboard_command_process = std::thread(command);
+
+    cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
+    std::string cam1_topic, cam2_topic;
+    if (fsSettings["cam1_topic"].empty() || fsSettings["cam2_topic"].empty())
+    {
+        std::cerr << " plese provide cam and imu topics' name!!!!" << std::endl;
+        return -1;
+    }
+    else
+    {
+        fsSettings["cam1_topic"] >> cam1_topic;
+        fsSettings["cam2_topic"] >> cam2_topic;
+        std::cout << "cam1_topic is : " << cam1_topic << std::endl;
+        std::cout << "cam2_topic is : " << cam2_topic << std::endl;
+    }
+    fsSettings.release();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::STEREO,true);
@@ -107,21 +179,23 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
 
-    message_filters::Subscriber<sensor_msgs::Image> left_sub(nh, "/camera/left/image_raw", 1);
-    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, "/camera/right/image_raw", 1);
+    message_filters::Subscriber<sensor_msgs::Image> left_sub(nh, cam1_topic.c_str(), 1);
+    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, cam2_topic.c_str(), 1);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), left_sub,right_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabStereo,&igb,_1,_2));
+
+    pub_pose = nh.advertise<nav_msgs::Odometry>("orb_pose", 1);
+    pub_path = nh.advertise<nav_msgs::Path>("orb_path", 1, true);
 
     ros::spin();
 
     // Stop all threads
     SLAM.Shutdown();
-
-    // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory_TUM_Format.txt");
-    SLAM.SaveTrajectoryTUM("FrameTrajectory_TUM_Format.txt");
-    SLAM.SaveTrajectoryKITTI("FrameTrajectory_KITTI_Format.txt");
+    const string kf_file =  "kf_traj.txt";
+    const string f_file =  "f_traj.txt";
+    SLAM.SaveTrajectoryTUM(f_file);
+    SLAM.SaveKeyFrameTrajectoryTUM(kf_file);
 
     ros::shutdown();
 
@@ -158,11 +232,58 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const se
         cv::Mat imLeft, imRight;
         cv::remap(cv_ptrLeft->image,imLeft,M1l,M2l,cv::INTER_LINEAR);
         cv::remap(cv_ptrRight->image,imRight,M1r,M2r,cv::INTER_LINEAR);
-        mpSLAM->TrackStereo(imLeft,imRight,cv_ptrLeft->header.stamp.toSec());
+        cv::Mat Data_TVag = mpSLAM->TrackStereo(imLeft,imRight,cv_ptrLeft->header.stamp.toSec());
+
+        if (!Data_TVag.empty())
+        {
+            nav_msgs::Odometry Twb;
+            Twb.header.frame_id = "world";
+            Twb.header.stamp = cv_ptrLeft->header.stamp;
+            convertOrbSlamPoseToOdom(Data_TVag, Twb);
+            pub_pose.publish(Twb);
+            orb_path.header.frame_id = Twb.header.frame_id;
+            orb_path.header.stamp = Twb.header.stamp;
+            geometry_msgs::PoseStamped tmp_pose;
+            tmp_pose.header.frame_id = Twb.header.frame_id;
+            tmp_pose.header.stamp = Twb.header.stamp;
+            tmp_pose.pose.position = Twb.pose.pose.position;
+            tmp_pose.pose.orientation = Twb.pose.pose.orientation;
+            orb_path.poses.push_back(tmp_pose);
+            pub_path.publish(orb_path);
+        }
     }
     else
     {
-        mpSLAM->TrackStereo(cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
+        cv::Mat Data_TVag = mpSLAM->TrackStereo(cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
+
+        if (!Data_TVag.empty())
+        {
+            nav_msgs::Odometry Twb;
+            Twb.header.frame_id = "world";
+            Twb.header.stamp = cv_ptrLeft->header.stamp;
+            convertOrbSlamPoseToOdom(Data_TVag, Twb);
+            pub_pose.publish(Twb);
+            orb_path.header.frame_id = Twb.header.frame_id;
+            orb_path.header.stamp = Twb.header.stamp;
+            geometry_msgs::PoseStamped tmp_pose;
+            tmp_pose.header.frame_id = Twb.header.frame_id;
+            tmp_pose.header.stamp = Twb.header.stamp;
+            tmp_pose.pose.position = Twb.pose.pose.position;
+            tmp_pose.pose.orientation = Twb.pose.pose.orientation;
+            orb_path.poses.push_back(tmp_pose);
+            pub_path.publish(orb_path);
+        }
+    }
+
+    if (is_stop_dz)
+    {
+        std::cout << "current tast is ended !!! " << std::endl;
+        mpSLAM->Shutdown();
+        const string kf_file =  "kf_traj.txt";
+        const string f_file =  "f_traj.txt";
+        mpSLAM->SaveTrajectoryTUM(f_file);
+        mpSLAM->SaveKeyFrameTrajectoryTUM(kf_file);
+        exit(0);
     }
 
 }
