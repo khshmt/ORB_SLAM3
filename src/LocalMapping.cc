@@ -131,7 +131,7 @@ namespace ORB_SLAM3
                                    mpCurrentKeyFrame->GetCameraCenter()).norm() +
                                   (mpCurrentKeyFrame->mPrevKF->mPrevKF->GetCameraCenter() -
                                    mpCurrentKeyFrame->mPrevKF->GetCameraCenter()).norm();
-                        if ((mTinit < 40.f) && (dist_dz < 0.02) && !mpCurrentKeyFrame->GetMap()->GetIniertialBA1())
+                        if ((mTinit < 10.f) && (dist_dz < 0.015) && !mpCurrentKeyFrame->GetMap()->GetIniertialBA1())
                         {
                             //在未完成VI-BA1时，若运动激励不足则直接重置当前地图，重新初始化
                             cout << "Not enough motion for initializing. Reseting..." << endl;
@@ -141,6 +141,7 @@ namespace ORB_SLAM3
                             mbBadImu = true;
                             usleep(50000);
                         }
+
 /*                        std::cout << mTinit << " | " << mpAtlas->KeyFramesInMap() << " | dist_dz is : " << dist_dz
                                   << std::endl;*/
                     }
@@ -155,7 +156,7 @@ namespace ORB_SLAM3
                                          (mpCurrentKeyFrame->mPrevKF->mPrevKF->GetCameraCenter() -
                                           mpCurrentKeyFrame->mPrevKF->GetCameraCenter()).norm();
 
-                            if (dist > 0.05)
+                            if (dist > 0.02)
                                 mTinit += mpCurrentKeyFrame->mTimeStamp - mpCurrentKeyFrame->mPrevKF->mTimeStamp;
                             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                             {
@@ -236,7 +237,7 @@ namespace ORB_SLAM3
                             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA1())
                             {
 #ifdef FAST_INIT_NEEDED
-                                if (mTinit > 6.f)
+                                if (mTinit > 7.0f)
 #else
                                 if (mTinit > 5.0f)
 #endif
@@ -253,7 +254,7 @@ namespace ORB_SLAM3
                             } else if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                             {
 #ifdef FAST_INIT_NEEDED
-                                if (mTinit > 15.f)
+                                if (mTinit > 17.0f)
 #else
                                 if (mTinit > 15.0f)
 #endif
@@ -270,7 +271,7 @@ namespace ORB_SLAM3
                             }
 
                             // scale refinement
-                            if (((mpAtlas->KeyFramesInMap()) <= 200) &&
+                            if (((mpAtlas->KeyFramesInMap()) <= 150) &&
                                 ((mTinit > 25.0f && mTinit < 25.5f) ||
                                  (mTinit > 35.0f && mTinit < 35.5f) ||
                                  (mTinit > 45.0f && mTinit < 45.5f) ||
@@ -1208,9 +1209,9 @@ namespace ORB_SLAM3
         int nMinKF;
         if (mbMonocular)
         {
-            minTime = 2.0;
+            minTime = 1.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 11;
+            nMinKF = 8;
 #else
             nMinKF = 10;
 #endif
@@ -1218,7 +1219,7 @@ namespace ORB_SLAM3
         {
             minTime = 1.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 11;
+            nMinKF = 10;
 #else
             nMinKF = 10;
 #endif

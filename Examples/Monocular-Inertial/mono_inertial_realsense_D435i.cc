@@ -41,6 +41,7 @@ bool b_continue_session;
 void exit_loop_handler(int s){
     cout << "Finishing session" << endl;
     b_continue_session = false;
+    exit(0);
 
 }
 
