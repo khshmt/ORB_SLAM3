@@ -229,6 +229,7 @@ void ImageGrabber::SyncWithImu() {
         if (!img0Buf.empty() && !mpImuGb->imuBuf.empty())
         {
             tIm = img0Buf.front()->header.stamp.toSec();
+            tIm = tIm + shift;
             if (tIm > mpImuGb->imuBuf.back()->header.stamp.toSec())
                 continue;
             {
@@ -238,7 +239,7 @@ void ImageGrabber::SyncWithImu() {
                 this->mBufMutex.unlock();
             }
 
-            tIm = tIm + shift;
+//            tIm = tIm + shift;
 
             vector<ORB_SLAM3::IMU::Point> vImuMeas;
             mpImuGb->mBufMutex.lock();

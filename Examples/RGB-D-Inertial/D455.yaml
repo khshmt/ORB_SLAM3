@@ -7,7 +7,7 @@ File.version: "1.0"
 
 Camera.type: "PinHole"
 
-# Camera calibration and distortion parameters (OpenCV) 
+# Right Camera calibration and distortion parameters (OpenCV)
 Camera1.fx: 386.87814095
 Camera1.fy: 386.96984777
 Camera1.cx: 324.31239864
@@ -29,36 +29,45 @@ Camera.fps: 30
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
-# Transformation from camera to body-frame (imu)
+Stereo.ThDepth: 60.0
+Stereo.b: 0.0950
+
+# Depth map values factor
+RGBD.DepthMapFactor: 1000.0
+
+# Transformation from body-frame (imu) to left camera
 IMU.T_b_c1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: f
    data: [0.99999681, -0.00232822,  0.00098176,  0.03150875,
-         0.00233091,  0.99999349, -0.00275476,  0.00780516,
-        -0.00097534,  0.00275704,  0.99999572,  0.0204202,
-         0.0, 0.0, 0.0, 1.0]
+          0.00233091,  0.99999349, -0.00275476,  0.00780516,
+          -0.00097534,  0.00275704,  0.99999572,  0.0204202,
+          0.0, 0.0, 0.0, 1.0]
 
-# IMU noise
+
+# Do not insert KFs when recently lost
+IMU.InsertKFsWhenLost: 0
+
+# IMU noise (Use those from VINS-mono)
 IMU.NoiseGyro: 0.00162244828839 #0.0229448837368
-IMU.NoiseAcc: 0.0115306603878 #2 # 0.163068163036 
-#IMU.NoiseGyro: 0.0229448837368 #0.0229448837368 
-#IMU.NoiseAcc: 0.163068163036 #2 # 0.163068163036 
+IMU.NoiseAcc: 0.0115306603878 #2 # 0.163068163036
+#IMU.NoiseGyro: 0.0229448837368 #0.0229448837368
+#IMU.NoiseAcc: 0.163068163036 #2 # 0.163068163036
 IMU.GyroWalk: 1.62153959841e-05 # rad/s^1.5
 IMU.AccWalk: 0.000231469033312 # m/s^2.5
 IMU.Frequency: 200.0
 
 time_shift: -0.0028
 #Topic names
-cam_topic: "/camera/color/image_raw"
+color_topic: "/camera/color/image_raw"
+depth_topic: "/camera/aligned_depth_to_color/image_raw"
 imu_topic: "/camera/imu"
-
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
-
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1200 # 1000
+ORBextractor.nFeatures: 1250
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
 ORBextractor.scaleFactor: 1.2
@@ -84,6 +93,5 @@ Viewer.CameraSize: 0.08
 Viewer.CameraLineWidth: 3.0
 Viewer.ViewpointX: 0.0
 Viewer.ViewpointY: -0.7
-Viewer.ViewpointZ: -3.5 # -1.8
+Viewer.ViewpointZ: -3.5
 Viewer.ViewpointF: 500.0
-

@@ -113,6 +113,15 @@ target_link_libraries(RGBD
 ${LIBS}
 )
 
+# Node for RGB-D-inertial camera
+add_executable(RGBD_Inertial
+        src/ros_rgbd_inertial.cc
+        )
+
+target_link_libraries(RGBD_Inertial
+        ${LIBS}
+        )
+
 # Node for monocular-inertial camera
 add_executable(Mono_Inertial
 src/ros_mono_inertial.cc

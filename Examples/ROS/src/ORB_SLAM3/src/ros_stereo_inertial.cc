@@ -348,11 +348,15 @@ void ImageGrabber::SyncWithImu() {
                 // std::cout << "big time difference" << std::endl;
                 continue;
             }
+
+            //更新正确的图像时间，将图像时间对齐到IMU时间戳上.
+            tImLeft = tImLeft + shift;
             if (tImLeft > mpImuGb->imuBuf.back()->header.stamp.toSec())
                 continue;
 
 //            Twb.header.stamp = imgLeftBuf.front()->header.stamp;
-            tImLeft = tImLeft + shift;
+//            tImLeft = tImLeft + shift;
+
             Twb.header.stamp.fromSec(tImLeft);
 
             this->mBufMutexLeft.lock();
@@ -374,13 +378,16 @@ void ImageGrabber::SyncWithImu() {
                 while (!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tImLeft)
                 {
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
-                    cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x,
+/*                    cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x,
                                     mpImuGb->imuBuf.front()->linear_acceleration.y,
                                     mpImuGb->imuBuf.front()->linear_acceleration.z);
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x,
                                     mpImuGb->imuBuf.front()->angular_velocity.y,
                                     mpImuGb->imuBuf.front()->angular_velocity.z);
-                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
+                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));*/
+                    cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
+                    cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
+                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc,gyr,t));
                     mpImuGb->imuBuf.pop();
                 }
             }

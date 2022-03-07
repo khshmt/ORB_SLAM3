@@ -417,8 +417,9 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
     Eigen::Matrix4f test_eig = Tcw.matrix();
     cv::Mat tmp_Data = cv::Mat::zeros(7,4,CV_32F);
-    if (!test_eig.isIdentity())
+    if (!test_eig.isIdentity() && (mpAtlas->GetCurrentMap()->GetIniertialBA1() || mSensor == System::RGBD) )
     {
+        IMU::Bias tmp_bias = mpTracker->mCurrentFrame.mImuBias;
         cv::Mat tmp_cv_mat0 = cv::Mat(4, 4, CV_32F);
         cv::Mat tmp_cv_mat = cv::Mat(3, 1, CV_32F);
         cv::eigen2cv((Tcw.inverse()).matrix(), tmp_cv_mat0);
@@ -426,6 +427,13 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
         cv::eigen2cv(mpTracker->mCurrentFrame.GetVelocity(), tmp_cv_mat);
         tmp_cv_mat = tmp_cv_mat.t();
         tmp_cv_mat.copyTo(tmp_Data.row(4).colRange(0, 3));
+
+        tmp_Data.at<float>(5, 0) = tmp_bias.bax;
+        tmp_Data.at<float>(5, 1) = tmp_bias.bay;
+        tmp_Data.at<float>(5, 2) = tmp_bias.baz;
+        tmp_Data.at<float>(6, 0) = tmp_bias.bwx;
+        tmp_Data.at<float>(6, 1) = tmp_bias.bwy;
+        tmp_Data.at<float>(6, 2) = tmp_bias.bwz;
     }
     else
         tmp_Data.release();
