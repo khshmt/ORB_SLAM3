@@ -1,5 +1,13 @@
 %YAML:1.0
 
+# If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
+#System.LoadAtlasFromFile: "MH01-MH05"
+System.LoadAtlasFromFile: "test21"
+
+# The store file is created from the current session, if a file with the same name exists it is deleted
+#System.SaveAtlasToFile: "MH01-MH05"
+#System.SaveAtlasToFile: "test21"
+
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
@@ -58,7 +66,7 @@ IMU.GyroWalk: 1.62153959841e-05 # rad/s^1.5
 IMU.AccWalk: 0.000231469033312 # m/s^2.5
 IMU.Frequency: 200.0
 
-time_shift: -0.0028
+time_shift: -0.0073  #-0.0028
 #Topic names
 color_topic: "/camera/color/image_raw"
 depth_topic: "/camera/aligned_depth_to_color/image_raw"
@@ -80,7 +88,7 @@ ORBextractor.nLevels: 8
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
 ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 7
+ORBextractor.minThFAST: 5
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

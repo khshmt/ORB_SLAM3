@@ -4,7 +4,7 @@
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
 
-#System.LoadAtlasFromFile: "dz_new2_2"
+System.LoadAtlasFromFile: "test12"
 
 
 #System.SaveAtlasToFile: "dz_new2_2"
