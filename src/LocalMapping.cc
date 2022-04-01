@@ -254,7 +254,7 @@ namespace ORB_SLAM3
                             } else if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                             {
 #ifdef FAST_INIT_NEEDED
-                                if (mTinit > 17.0f)
+                                if (mTinit > 15.5f)
 #else
                                 if (mTinit > 15.0f)
 #endif
@@ -1211,7 +1211,7 @@ namespace ORB_SLAM3
         {
             minTime = 1.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 8;
+            nMinKF = 11;
 #else
             nMinKF = 10;
 #endif
@@ -1219,7 +1219,7 @@ namespace ORB_SLAM3
         {
             minTime = 1.0;
 #ifdef FAST_INIT_NEEDED
-            nMinKF = 10;
+            nMinKF = 11;
 #else
             nMinKF = 10;
 #endif

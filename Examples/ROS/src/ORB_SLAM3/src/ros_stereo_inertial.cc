@@ -112,7 +112,8 @@ public:
     cv::Ptr<cv::CLAHE> mClahe = cv::createCLAHE(3.0, cv::Size(8, 8));
 };
 
-void convertOrbSlamPoseToOdom(const cv::Mat &cv_data, nav_msgs::Odometry &Twb) {
+void convertOrbSlamPoseToOdom(const cv::Mat &cv_data, nav_msgs::Odometry &Twb, Eigen::Vector3d ang_vel,
+                              Eigen::Vector3d acc_) {
 
     assert(orb_data.rows == 7);
     Eigen::MatrixXf eig_data;
@@ -130,6 +131,13 @@ void convertOrbSlamPoseToOdom(const cv::Mat &cv_data, nav_msgs::Odometry &Twb) {
     Twb.twist.twist.linear.x = eig_data_d(4, 0);
     Twb.twist.twist.linear.y = eig_data_d(4, 1);
     Twb.twist.twist.linear.z = eig_data_d(4, 2);
+    Twb.twist.twist.angular.x = ang_vel.x();
+    Twb.twist.twist.angular.y = ang_vel.y();
+    Twb.twist.twist.angular.z = ang_vel.z();
+
+    Twb.twist.covariance[0] = acc_.x();
+    Twb.twist.covariance[1] = acc_.y();
+    Twb.twist.covariance[2] = acc_.z();
 
     ba = eig_data_d.block<1, 3>(5, 0);
     bg = eig_data_d.block<1, 3>(6, 0);
@@ -371,6 +379,8 @@ void ImageGrabber::SyncWithImu() {
 
             vector<ORB_SLAM3::IMU::Point> vImuMeas;
             mpImuGb->mBufMutex.lock();
+            Eigen::Vector3d angel_vel = Eigen::Vector3d::Zero();
+            Eigen::Vector3d acc_dz = Eigen::Vector3d::Zero();
             if (!mpImuGb->imuBuf.empty())
             {
                 // Load imu measurements from buffer
@@ -388,6 +398,8 @@ void ImageGrabber::SyncWithImu() {
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
                     vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc,gyr,t));
+                    angel_vel.x() = gyr.x; angel_vel.y() = gyr.y; angel_vel.z() = gyr.z;
+                    acc_dz.x() = acc.x; acc_dz.y() = acc.y; acc_dz.z() = acc.z;
                     mpImuGb->imuBuf.pop();
                 }
             }
@@ -407,7 +419,7 @@ void ImageGrabber::SyncWithImu() {
             cv::Mat Data_TVag = mpSLAM->TrackStereo(imLeft, imRight, tImLeft, vImuMeas);
             if (!Data_TVag.empty())
             {
-                convertOrbSlamPoseToOdom(Data_TVag, Twb);
+                convertOrbSlamPoseToOdom(Data_TVag, Twb, angel_vel, acc_dz);
                 pub_pose.publish(Twb);
                 orb_path.header.frame_id = Twb.header.frame_id;
                 orb_path.header.stamp = Twb.header.stamp;
