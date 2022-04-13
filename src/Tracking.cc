@@ -2343,8 +2343,11 @@ void Tracking::StereoInitialization()
                 cout << "not IMU meas" << endl;
                 return;
             }
-
+#ifdef FAST_INIT_NEEDED
+            if (!mFastInit && (mCurrentFrame.mpImuPreintegratedFrame->avgA-mLastFrame.mpImuPreintegratedFrame->avgA).norm()<0.35)
+#else
             if (!mFastInit && (mCurrentFrame.mpImuPreintegratedFrame->avgA-mLastFrame.mpImuPreintegratedFrame->avgA).norm()<0.5)
+#endif
             {
                 cout << "not enough acceleration" << endl;
                 return;

@@ -41,9 +41,13 @@
 
 #include "OptimizableTypes.h"
 
-
 namespace ORB_SLAM3
 {
+    bool dz_sortKf(KeyFrame* a, KeyFrame* b)
+    {
+        return (a->mnId < b->mnId);
+    }
+
 bool sortByVal(const pair<MapPoint*, int> &a, const pair<MapPoint*, int> &b)
 {
     return (a.second < b.second);
@@ -392,10 +396,16 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)
 {
     long unsigned int maxKFid = pMap->GetMaxKFid();
-    const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
+
+//    const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
 
-    // Setup optimizer
+    //TODO: 2022/3/1 对待优化的关键帧按ID号排序 by dz
+    vector<KeyFrame*> tmp_vpKFs = pMap->GetAllKeyFrames();
+    sort(tmp_vpKFs.begin(), tmp_vpKFs.end(), dz_sortKf);
+    const vector<KeyFrame*> vpKFs = tmp_vpKFs;
+
+        // Setup optimizer
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType * linearSolver;
 
@@ -431,6 +441,18 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
                 nNonFixed++;
             VP->setFixed(bFixed);
         }
+
+        //TODO: 2022/2/26 调整全局BA中的free gauge，固定关键帧策略  by_dz
+        if (i < 2 && pKFi->GetMap()->GetIniertialBA2())
+            VP->setFixed(true);
+        if (i == 0 && !pKFi->GetMap()->GetIniertialBA2())
+            VP->setFixed(true);
+
+        /*if (i < 2 && pKFi->GetMap()->isImuInitialized())
+            VP->setFixed(true);
+        if (i == 0 & !pKFi->GetMap()->isImuInitialized())
+            VP->setFixed(true);*/
+
         optimizer.addVertex(VP);
 
         if(pKFi->bImu)
@@ -1706,6 +1728,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         }
 
         // Inertial edges if inertial
+        //TODO: 2022/3/1 为了能在非IMU模式下融合IMU地图 by dz
+//        if(pKF->bImu && pKF->mPrevKF && pKF->GetMap()->IsInertial())
         if(pKF->bImu && pKF->mPrevKF)
         {
             g2o::Sim3 Spw;
@@ -5353,6 +5377,13 @@ void Optimizer::OptimizeEssentialGraph4DoF(Map* pMap, KeyFrame* pLoopKF, KeyFram
 
         V4DoF->setId(nIDi);
         V4DoF->setMarginalized(false);
+
+        //TODO: 2022/3/1 固定回环优化过程中的初始帧 by dz
+        if (nIDi == pMap->GetInitKFid())
+        {
+            std::cout<< "fix init Kf ~" << std::endl;
+            V4DoF->setFixed(true);
+        }
 
         optimizer.addVertex(V4DoF);
         vpVertices[nIDi]=V4DoF;

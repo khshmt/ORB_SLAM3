@@ -155,6 +155,11 @@ public:
     std::set<long unsigned int> msOptKFs;
     std::set<long unsigned int> msFixedKFs;
 
+    bool mbImuInitialized;
+    bool mbIsInertial;
+    bool mbIMU_BA1;
+    bool mbIMU_BA2;
+
 protected:
 
     long unsigned int mnId;
@@ -174,8 +179,6 @@ protected:
 
     std::vector<MapPoint*> mvpReferenceMapPoints;
 
-    bool mbImuInitialized;
-
     int mnMapChange;
     int mnMapChangeNotified;
 
@@ -194,9 +197,10 @@ protected:
     bool mHasTumbnail;
     bool mbBad = false;
 
+/*    bool mbImuInitialized;
     bool mbIsInertial;
     bool mbIMU_BA1;
-    bool mbIMU_BA2;
+    bool mbIMU_BA2;*/
 
     // Mutex
     std::mutex mMutexMap;

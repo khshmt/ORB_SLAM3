@@ -236,8 +236,10 @@ void LoopClosing::Run()
                         g2o::Sim3 g2oSww_new = g2oTwc*mg2oLoopScw;
 
                         Eigen::Vector3d phi = LogSO3(g2oSww_new.rotation().toRotationMatrix());
-                        cout << "phi = " << phi.transpose() << endl; 
-                        if (fabs(phi(0))<0.008f && fabs(phi(1))<0.008f && fabs(phi(2))<0.349f)
+                        cout << "phi = " << phi.transpose() << endl;
+                        //TODO: 2022/2/26 这里适当提高对roll 和 pitch的容忍度
+//                        if (fabs(phi(0))<0.008f && fabs(phi(1))<0.008f && fabs(phi(2))<0.349f)
+                        if (fabs(phi(0))<0.045f && fabs(phi(1))<0.045f && fabs(phi(2))<0.349f)
                         {
                             if(mpCurrentKF->GetMap()->IsInertial())
                             {
@@ -338,6 +340,7 @@ bool LoopClosing::NewDetectCommonRegions()
         mpLastMap = mpCurrentKF->GetMap();
     }
 
+    //TODO: 2022/3/1 加速地图融合，即VI-BA1就可以开始了(default: GetIniertialBA2) by dz
     if(mpLastMap->IsInertial() && !mpLastMap->GetIniertialBA2())
     {
         mpKeyFrameDB->add(mpCurrentKF);
@@ -392,7 +395,8 @@ bool LoopClosing::NewDetectCommonRegions()
             mg2oLoopSlw = gScw;
             mvpLoopMatchedMPs = vpMatchedMPs;
 
-
+            //TODO: 2022/3/1 这里为更容易检测到回环设置成2(default:3) by dz
+            std::cout << "This time is valid for loopcloure detection~~" << std::endl;
             mbLoopDetected = mnLoopNumCoincidences >= 3;
             mnLoopNumNotFound = 0;
 
@@ -406,6 +410,7 @@ bool LoopClosing::NewDetectCommonRegions()
             bLoopDetectedInKF = false;
 
             mnLoopNumNotFound++;
+            //TODO: 2022/3/1 notfound default is 2 by dz
             if(mnLoopNumNotFound >= 2)
             {
                 mpLoopLastCurrentKF->SetErase();
@@ -449,6 +454,7 @@ bool LoopClosing::NewDetectCommonRegions()
             bMergeDetectedInKF = false;
 
             mnMergeNumNotFound++;
+            //TODO: 2022/3/1 notfound default is 2 by dz
             if(mnMergeNumNotFound >= 2)
             {
                 mpMergeLastCurrentKF->SetErase();
@@ -1196,6 +1202,7 @@ void LoopClosing::CorrectLoop()
     mpCurrentKF->AddLoopEdge(mpLoopMatchedKF);
 
     // Launch a new thread to perform Global Bundle Adjustment (Only if few keyframes, if not it would take too much time)
+    //TODO: 2022/3/1 如果GBA可以采用gpu加速，则可以取消这里的200帧数限制 by dz
     if(!pLoopMap->isImuInitialized() || (pLoopMap->KeyFramesInMap()<200 && mpAtlas->CountMaps()==1))
     {
         mbRunningGBA = true;
@@ -1259,6 +1266,20 @@ void LoopClosing::MergeLocal()
     // Later, the elements of the current map will be transform to the new active map reference, in order to keep real time tracking
     Map* pCurrentMap = mpCurrentKF->GetMap();
     Map* pMergeMap = mpMergeMatchedKF->GetMap();
+
+    //TODO: 2022/3/1 为了能在非IMU模式下融合IMU地图 by dz
+    if (mpTracker->mSensor==System::MONOCULAR || mpTracker->mSensor==System::STEREO || mpTracker->mSensor==System::RGBD)
+    {
+        pMergeMap->mbImuInitialized = false;
+        pMergeMap->mbIsInertial = false;
+        pMergeMap->mbIMU_BA1 = false;
+        pMergeMap->mbIMU_BA2 = false;
+    }
+    for (KeyFrame* dz_pKf : pMergeMap->GetAllKeyFrames())
+    {
+        if (!pMergeMap->mbIsInertial)
+            dz_pKf->bImu = false;
+    }
 
     //std::cout << "Merge local, Active map: " << pCurrentMap->GetId() << std::endl;
     //std::cout << "Merge local, Non-Active map: " << pMergeMap->GetId() << std::endl;
@@ -2432,7 +2453,8 @@ void LoopClosing::RunGlobalBundleAdjustment(Map* pActiveMap, unsigned long nLoop
                     cv::imwrite(namefile, imLeft);
                 }*/
 
-
+                //TODO: 2022/3/1 为了能在非IMU模式下融合IMU地图 by dz
+//                if(pKF->bImu && pKF->GetMap()->IsInertial()) //modified
                 if(pKF->bImu)
                 {
                     //cout << "-------Update inertial values" << endl;

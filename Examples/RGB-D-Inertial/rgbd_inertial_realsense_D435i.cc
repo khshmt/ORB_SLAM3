@@ -42,7 +42,7 @@ bool b_continue_session;
 void exit_loop_handler(int s){
     cout << "Finishing session" << endl;
     b_continue_session = false;
-
+    exit(0);
 }
 
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
 
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_RGBD, true, 0, file_name);
+    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_MONOCULAR, true, 0, file_name);
     float imageScale = SLAM.GetImageScale();
 
     double timestamp;
@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
     #endif
 #endif
         // Pass the image to the SLAM system
-        SLAM.TrackRGBD(im, depth, timestamp, vImuMeas);
+        SLAM.TrackMonocular(im, timestamp, vImuMeas);
 
 #ifdef REGISTER_TIMES
     #ifdef COMPILEDWITHC11

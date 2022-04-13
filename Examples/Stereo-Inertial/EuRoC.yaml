@@ -7,11 +7,12 @@
 # When the variables are commented, the system doesn't load a previous session or not store the current one
 
 # If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
-System.LoadAtlasFromFile: "MH01-MH05"
 #System.LoadAtlasFromFile: "MH01-MH05"
+System.LoadAtlasFromFile: "dz_new"
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
 #System.SaveAtlasToFile: "MH01-MH05"
+#System.SaveAtlasToFile: "dz_new"
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
@@ -78,6 +79,12 @@ IMU.GyroWalk: 1.9393e-05
 IMU.AccWalk: 3.e-03 # 3.0000e-3
 IMU.Frequency: 200.0
 
+
+time_shift: 0.0
+#Topic names
+cam1_topic: "/cam0/image_raw"
+cam2_topic: "/cam1/image_raw"
+imu_topic: "/imu0"
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
