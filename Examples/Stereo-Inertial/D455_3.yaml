@@ -12,7 +12,7 @@
 
 # The store file is created from the current session, if a file with the same name exists it is deleted
 #System.SaveAtlasToFile: "MH01-MH05"
-System.SaveAtlasToFile: "dz_new_"
+#System.SaveAtlasToFile: "dz_new_"
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
