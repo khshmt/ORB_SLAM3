@@ -81,7 +81,7 @@ public:
 
 void convertOrbSlamPoseToOdom(const cv::Mat &cv_data, nav_msgs::Odometry &Twb) {
 
-    assert(orb_data.rows == 7);
+    assert(cv_data.rows == 7);
     Eigen::MatrixXf eig_data;
     cv::cv2eigen(cv_data, eig_data);
     Eigen::MatrixXd eig_data_d = eig_data.cast<double>();
