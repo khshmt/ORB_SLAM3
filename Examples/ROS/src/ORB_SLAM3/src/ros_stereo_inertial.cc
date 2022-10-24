@@ -354,6 +354,8 @@ void ImageGrabber::SyncWithImu() {
             if ((tImLeft - tImRight) > maxTimeDiff || (tImRight - tImLeft) > maxTimeDiff)
             {
                 // std::cout << "big time difference" << std::endl;
+                std::chrono::milliseconds tSleep(2);
+                std::this_thread::sleep_for(tSleep);
                 continue;
             }
 
@@ -441,10 +443,14 @@ void ImageGrabber::SyncWithImu() {
             pub_path.publish(orb_path);*/
             }
 
-            std::chrono::milliseconds tSleep(1);
+//            std::chrono::milliseconds tSleep(2);
+//            std::this_thread::sleep_for(tSleep);
+        }
+        else
+        {
+            std::chrono::milliseconds tSleep(2);
             std::this_thread::sleep_for(tSleep);
         }
-
         if (is_stop_dz)
             break;
     }

@@ -285,6 +285,8 @@ void ImageGrabber::SyncWithImu()
             if((tImRgb-tImDepth)>maxTimeDiff || (tImDepth-tImRgb)>maxTimeDiff)
             {
                 // std::cout << "big time difference" << std::endl;
+                std::chrono::milliseconds tSleep(2);
+                std::this_thread::sleep_for(tSleep);
                 continue;
             }
 
@@ -354,7 +356,11 @@ void ImageGrabber::SyncWithImu()
                 pub_path.publish(orb_path);
             }
 
-            std::chrono::milliseconds tSleep(1);
+//            std::chrono::milliseconds tSleep(1);
+//            std::this_thread::sleep_for(tSleep);
+        } else
+        {
+            std::chrono::milliseconds tSleep(2);
             std::this_thread::sleep_for(tSleep);
         }
 
