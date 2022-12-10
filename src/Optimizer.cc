@@ -443,15 +443,15 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
         }
 
         //TODO: 2022/2/26 调整全局BA中的free gauge，固定关键帧策略  by_dz
-        if (i < 2 && pKFi->GetMap()->GetIniertialBA2())
-            VP->setFixed(true);
-        if (i == 0 && !pKFi->GetMap()->GetIniertialBA2())
-            VP->setFixed(true);
-
+        
         /*if (i < 2 && pKFi->GetMap()->isImuInitialized())
             VP->setFixed(true);
         if (i == 0 & !pKFi->GetMap()->isImuInitialized())
             VP->setFixed(true);*/
+            
+        if (i == 0 && pKFi->GetMap()->isImuInitialized())
+            VP->setFixed(true);
+
 
         optimizer.addVertex(VP);
 
