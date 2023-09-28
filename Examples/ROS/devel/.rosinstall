@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/k-hshmt/cpp_dev/ORB_SLAM3/Examples/ROS/devel/setup.sh
